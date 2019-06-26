@@ -6,91 +6,76 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 
 public class BinarioCurvoSemplice extends Binario {
-	int lunghezzaD=31;//pezzo Dritto
-	int lunghezzaC=20;//pezzo Curvo
+	double lunghezzaD=31;//pezzo Dritto
+	double lunghezzaC=20;//pezzo Curvo
 	Giunto f1 = null;
 	Giunto m1 = null;
 	
 	//posizione punto angolo intermedio
-	int cX;
-	int cY;
+	double cX;
+	double cY;
 	//
 	//   f1 --- --- --- m1
 	//
 	
 
 	public void disegna(Graphics g) {
-		if(!selezionato )return;
+		if(libero )return;
 		Graphics2D g2 = (Graphics2D)g;
 	    //ricalcolaPosizioneGiunti();
 		
 		g.setColor(Color.red);
-		g2.drawLine(femmine[0].posX,femmine[0].posY,cX, cY);
+		g2.drawLine((int)Math.round(giuntoFemmina.posX),
+					(int)Math.round(giuntoFemmina.posY),
+					(int)Math.round(cX), 
+					(int)Math.round(cY));
 		g.setColor(Color.red);
-		g2.drawLine(cX,cY,  maschi[0].posX, maschi[0].posY);
+		g2.drawLine((int)Math.round(cX),
+					(int)Math.round(cY),
+					(int)Math.round(giuntoMaschio.posX),
+					(int)Math.round(giuntoMaschio.posY));
 		g.setColor(Color.red);
 		g.setFont(new Font("Arial", Font.PLAIN, 9));
-		g.drawString(""+id, femmine[0].posX+1,femmine[0].posY-1);
-		
-		g.drawString("Fx."+femmine[0].posX+" Fy:"+ femmine[0].posY, 10,id*30);
-		g.drawString("Mx."+maschi[0].posX+" My:"+ maschi[0].posY, 10,id*30+10);
+		//g.drawString(""+id, (int)Math.round(giuntoFemmina.posX)+1,(int)Math.round(giuntoFemmina.posY)-1);
+		//g.drawString("Fx."+giuntoFemmina.posX+" Fy:"+ giuntoFemmina.posY, 10,id*30);
+		//g.drawString("Mx."+giuntoMaschio.posX+" My:"+ giuntoMaschio.posY, 10,id*30+10);
 	}	
 	
-public BinarioCurvoSemplice(int id) {
-		super();
-		forma ="CURVA-SU";
-	inclinazione=0;
-	ribaltato = false;
-	selezionato = false;
+public BinarioCurvoSemplice(int id, double _inclinazioneGiunto ) {
+	super(id);
+	forma ="CURVA-SU";
+	
 	nome = "CURVO"+id;
 	
 	f1 = new Giunto();
 	m1 = new Giunto();
-	m1.inclinGiunto=270;
+	this.inclinazione =Math.random()*360.0;
 	
-	
-	
-	f1.posX =(int)(Math.random()*100)+150;
-	f1.posY =(int)(Math.random()*100)+150;
+	m1.inclinGiunto=_inclinazioneGiunto;
+	inclinazioneBase = _inclinazioneGiunto;
 
-	cX=(int)f1.posX+(int)(Math.cos(fattrad*this.inclinazione)*lunghezzaD);
-	cY=(int)f1.posY+(int)(Math.sin(fattrad*this.inclinazione)*lunghezzaD);
+
+	cX=f1.posX+(Math.cos(fattrad*this.inclinazione)*lunghezzaD);
+	cY=f1.posY+(Math.sin(fattrad*this.inclinazione)*lunghezzaD);
 
 	
-	m1.posX=(int)cX+(int)(Math.cos((fattrad*((this.inclinazione+270)%angolo_giro)))*lunghezzaC);
-	m1.posY=(int)cY+(int)(Math.sin((fattrad*((this.inclinazione+270)%angolo_giro)))*lunghezzaC);
+	m1.posX=cX+(Math.cos((fattrad*((this.inclinazione+inclinazioneBase)%angolo_giro)))*lunghezzaC);
+	m1.posY=cY+(Math.sin((fattrad*((this.inclinazione+inclinazioneBase)%angolo_giro)))*lunghezzaC);
 	
-	maschi = new Giunto[1];
-	maschi[0]=m1;
-	
-	femmine = new Giunto[1]; 
-	femmine[0] = f1;
+	giuntoMaschio = m1;
+	giuntoFemmina = f1;
 }
 
 
-public void rovescia(){
-	if(ribaltato)		forma ="CURVA-SU";
-	else 				forma ="CURVA-GIU";
-
-	
-	if(!ribaltato) m1.inclinGiunto=(m1.inclinGiunto+360+90)%angolo_giro;
-	if( ribaltato) m1.inclinGiunto=(m1.inclinGiunto+360-90)%angolo_giro;
-	
-	ribaltato = !ribaltato;
-}
 
 public void ricalcolaPosizioneGiunti(){
-	cX=(int)f1.posX+(int)(Math.cos(fattrad*this.inclinazione)*lunghezzaD);
-	cY=(int)f1.posY+(int)(Math.sin(fattrad*this.inclinazione)*lunghezzaD);
 
-	
-	if(ribaltato){
-		m1.posX=(int)cX+(int)(Math.cos(fattrad*((this.inclinazione-270)%angolo_giro))*lunghezzaC);
-		m1.posY=(int)cY+(int)(Math.sin(fattrad*((this.inclinazione-270)%angolo_giro))*lunghezzaC);
-	}
-	else{
-		m1.posX=(int)cX+(int)(Math.cos(fattrad*((this.inclinazione+270)%angolo_giro))*lunghezzaC);
-		m1.posY=(int)cY+(int)(Math.sin(fattrad*((this.inclinazione+270)%angolo_giro))*lunghezzaC);
+	cX=f1.posX+(Math.cos(fattrad*this.inclinazione)*lunghezzaD);
+	cY=f1.posY+(Math.sin(fattrad*this.inclinazione)*lunghezzaD);
+
+{
+		m1.posX=cX+(Math.cos(fattrad*((this.inclinazione+inclinazioneBase)%angolo_giro))*lunghezzaC);
+		m1.posY=cY+(Math.sin(fattrad*((this.inclinazione+inclinazioneBase)%angolo_giro))*lunghezzaC);
 	}
 
 	

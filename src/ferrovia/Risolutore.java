@@ -1,304 +1,237 @@
 package ferrovia;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.awt.Component;
 import java.awt.Toolkit;
 import java.util.Hashtable;
 
 public class Risolutore {
-	private static final int _numCurvi = 10;
-	private static final int _numDritti = 8;
-	private static final int _numBinari = _numDritti+_numCurvi;
-	static double fattrad = 3.1415 / 180;
-	static Hashtable configurazioneAttuale;
-	static Binario ultimoSelezionato = null;
+	private static int _numCurvi = 8;
+	private static int _numDritti = 2;
 
-	private static Area areaDisegno;// area disegno
+	static double fattrad = 3.1415 / 180;
+	
+	static Binario ultimoSelezionato = null;
+	
+	private static Binario primoBinario = null;
+	private static Hashtable configurazione;
+	private static Area areaDisegno;
+
+	//private static ;// area disegno
 
 	public static void main(String[] args) {
-		// esempio();
+		Hashtable configurazioneAttuale  = init();
+		start(configurazioneAttuale);
+	}
+
+	public static Hashtable init() {
+		
+		configurazione = inizializzaBinari(40,8);
 		areaDisegno = Area.getIstanza();
-
-		configurazioneAttuale = inizializzaBinari();
-		Binario binarioIniziale = selezionaBinario(configurazioneAttuale, null);
-		boolean trovato = false;
-		Binario prossimo = binarioIniziale;
-		while(prossimo != null){
-			prossimo = agganciaBinario(prossimo);	
-		}
-		
-		
-
-	}
-
-	private static void esempio() {
-		// TODO Auto-generated method stub
-		int Fx = 10;
-		int Fy = 20;
-		int Mx = Fx + (int) (Math.cos(fattrad * 270) * 30);
-		int My = Fy + (int) (Math.sin(fattrad * 270) * 30);
-
-		System.out.println("" + Mx);
-		System.out.println("" + My);
-		System.out.println("" + (int) (Math.cos(fattrad * 270) * 30));
-
+		return configurazione;
 	}
 
 	
-	
-	public static Binario agganciaBinario(Binario attuale) {
 
+
+	private static void start(Hashtable configurazioneAttuale) {
+
+		while(true)
+		attaccaNextBinario(configurazioneAttuale);
+		
+	}
+
+	private static void attaccaNextBinario(Hashtable configurazioneAttuale) {
+		 
 		areaDisegno.repaint();
-		Binario prossimo = null;
-		for(int k = 1;k<=_numBinari;k++){
-			int x=k;
-			
-			
-			
-			prossimo = (Binario)(configurazioneAttuale.get(""+x));
-			if(attuale.listaOut.containsKey(""+prossimo.forma)) {
-				prossimo =null;
-				continue;		
-			}
-			
-			if(attuale.listaOut.containsKey(""+prossimo.forma)) {
-				prossimo =null;
-				continue;		
-			}
-			
-		if(prossimo == null || prossimo.selezionato)  
-				prossimo = null;
-					
-		else{
-				attuale.listaOut.put(""+prossimo.forma,prossimo);
-				prossimo.selezionato=true;
-				break;
-			}
-		}//fine ciclo
 		
-
-		if (prossimo != null) {
-				//precedente.ultimoAgganciato=prossimo.id;
-				prossimo.precedente = attuale;
-				prossimo.femmine[0].posX = attuale.maschi[0].posX;
-				prossimo.femmine[0].posY = attuale.maschi[0].posY;
-				prossimo.inclinazione = (attuale.inclinazione + attuale.maschi[0].inclinGiunto) % Binario.angolo_giro;
-	
-	
-				prossimo.ricalcolaPosizioneGiunti();	
-				
-				Risolutore.soluzione(prossimo);
-				return (prossimo);
+		Binario testa = getTestaTracciato(configurazioneAttuale);
+		Binario candidato  = selezionaBinarioLibero(configurazioneAttuale,testa);
+		if(candidato == null) backTrack(configurazioneAttuale, testa);
+		else {
+			candidato.agganciaAl(testa);
+			if (soluzioneBuona(configurazioneAttuale)) {
+				//attaccaNextBinario(configurazioneAttuale);
+			}
+			else {
+				candidato.sgancia();
+				testa.addNonBuoni(candidato);
+				//attaccaNextBinario(configurazioneAttuale);
+			}
 		}	
-	
-		//soluzione(attuale);
 		
-		if (prossimo == null) {
-			Binario ripartenza = smontaBinario(configurazioneAttuale,
-					attuale);
-			System.out.println("back-track:" + attuale.nome);
-			//agganciaBinario(ripartenza);
-			
-		}
-		return (attuale.precedente);
 	}
 
-	private static boolean soluzione(Binario b) {
 
-		Binario primo = (Binario)(configurazioneAttuale.get("1"));
-		int cont=0;
-		for(int k = 1;k<=_numBinari;k++){
-			Binario prossimo = (Binario)(configurazioneAttuale.get(""+k));
-			
-			if(prossimo.selezionato) {
-				if(verificaIncrocio(prossimo)) 
-					cont=0;
-				cont++;
-			}
-		}	
-		
-		
-		if (cont<_numBinari) 
-			return false;
-		
-		if (Math.abs(b.maschi[0].posX-primo.femmine[0].posX)<=20)
-			if (Math.abs(b.maschi[0].posY-primo.femmine[0].posY)<=20)
-				if ((b.maschi[0].inclinGiunto+b.inclinazione)%Binario.angolo_giro ==primo.inclinazione)
-				{
-				Toolkit.getDefaultToolkit().beep();
-				Toolkit.getDefaultToolkit().beep();
-				Toolkit.getDefaultToolkit().beep();
-				//areaDisegno.repaint();
-				return true;
-				}
-		
+	public static boolean fine(Hashtable configurazioneAttuale) {
+		Binario testa = getPrimoBinario(configurazioneAttuale);
+		Binario ultimo = getTestaTracciato(configurazioneAttuale);
+		if (Math.round(testa.giuntoFemmina.posX) == Math.round(ultimo.giuntoMaschio.posX) &&
+				Math.round(testa.giuntoFemmina.posY) == Math.round(ultimo.giuntoMaschio.posY)) 
+			return true;
 		return false;
-	}
+		
+	}		
 
-	
-	private static boolean verificaIncrocio(Binario b) {
-
-		Binario primo = (Binario)(configurazioneAttuale.get("1"));
-		primo.ricalcolaPosizioneGiunti();
-		int cont=0;
-		for(int k = 1;k<=_numBinari;k++){
-			Binario prossimo = (Binario)(configurazioneAttuale.get(""+k));
-			if(prossimo.selezionato && prossimo!=b) {
-				if (Math.abs(b.maschi[0].posY-prossimo.maschi[0].posY)<=20)
-				if (Math.abs(b.maschi[0].posX-prossimo.maschi[0].posX)<=20)
-				
-								return true;
-				
+	private static boolean soluzioneBuona(Hashtable configurazioneAttuale) {
+		if (selezionaBinarioLibero(configurazioneAttuale, primoBinario) == null) {
+			if( fine(configurazioneAttuale)) {
+				//System.exit(0);
+				for (int i = 0; i < 10; i++) {
+					i=i-1;
+				} 
 			}
-		}	
-		return (false);
-	}
-
-	public static void agganciaBinarioOLD(Binario precedente) {
-		int ultimo=precedente.ultimoAgganciato;
-		Binario prossimo = selezionaBinario(configurazioneAttuale, precedente);
-		
-		
-		if (prossimo == null) {
-			Binario ripartenza = smontaBinario(configurazioneAttuale,
-					precedente);
-			System.out.println("backtrack:" + precedente.nome);
-			agganciaBinario(ripartenza);
-			return;
-		}
-		precedente.ultimoAgganciato=prossimo.id;
-		prossimo.precedente = precedente;
-		prossimo.femmine[0].posX = precedente.maschi[0].posX;
-		prossimo.femmine[0].posY = precedente.maschi[0].posY;
-
-		prossimo.inclinazione = (precedente.inclinazione + precedente.maschi[0].inclinGiunto) % Binario.angolo_giro;
-		
-		// System.out.println(precedente);
-		// System.out.println(prossimo);
-		for (long w = 0; w < 10000000; w++) {
-			long x = w;
-		}
-		areaDisegno.repaint();
-		
-		agganciaBinario(prossimo);
-	}
-
-	private static Binario smontaBinario(Hashtable configurazioneAttuale2,
-			Binario ultimo) {
-		// oltre a rimuoversi
-		// rimuove tutti i successori
-		// e return predecessore
-		ultimo.rovescia();
-		ultimo.listaOut=new Hashtable();
-		ultimo.femmine[0].posX = 10;
-		ultimo.femmine[0].posY = 50;
-		ultimo.inclinazione = 0;
-		ultimo.selezionato = false;
-		ultimoSelezionato = ultimo;
-		//areaDisegno.repaint();
-		return ultimo.precedente;
-	}
-
-	public static Binario selezionaBinario(Hashtable configurazione,
-			Binario precedente) {
-
-		Binario bin = null;
-		if (precedente != null) {
-			Giunto[] insiemeGiuntiM = precedente.maschi;
-
-			for (int k = 1; k <= _numBinari; k++) {
-				bin = (Binario) configurazioneAttuale.get("" + k);
-
-				if (bin.selezionato == false
-						&& !precedente.listaOut.contains(bin)) {
-					if (bin == ultimoSelezionato)
-						if (bin.ribaltato) {// l'ho provato in entrambi i versi
-							precedente.listaOut.put(bin.nome,bin);
-							bin.rovescia();// lo raddrizza per il futuro
-							return null;
-						} else {
-							bin.rovescia();
-							bin.svuotalistaOut(bin.listaOut);
-
-						}
-					break;
-				}
-
-			}
-
-		} else {
-			bin = (Binario) configurazione.get("1"); // prende il primo
+			else return false;
 		}
 		
-		if (bin.selezionato == true)
-			return null;
-		if (precedente != null && precedente.listaOut.contains(bin))
-			return null;
-		bin.selezionato = true;
-		bin.precedente = precedente;
-		// System.out.println("selezionato:"+bin);
-		// stampaConfig();
-		//areaDisegno.repaint();
-		return bin;
-
-	}
-
-	private static void stampaConfig() {
-		System.out.println("configurazioneAttuale");
-		Binario bin = null;
-		for (int k = 1; k <= _numBinari; k++) {
-			bin = (Binario) configurazioneAttuale.get("" + k);
-			if (bin.selezionato)
-				bin.stampa();
+		int lunghezzaMedia = 60;
+		if(distanzaTestaPrimo(configurazioneAttuale)>numeroLiberi(configurazioneAttuale)*lunghezzaMedia) {
+			return false;
 		}
+		
+		return true;
+	}		
+
+	private static int numeroLiberi(Hashtable configurazioneAttuale) {
+		int liberi=0;
+		int size = configurazioneAttuale.size();
+		for(int i=1 ; i<=size;i++) {
+			Binario bi = (Binario)configurazioneAttuale.get(""+i);
+			if(bi.libero) liberi++;
+		}
+		
+		return liberi;
 	}
 
-	public static Hashtable inizializzaBinari() {
+	private static int distanzaTestaPrimo(Hashtable configurazioneAttuale) {
+		Binario testa = getTestaTracciato(configurazioneAttuale);
+		Binario primo = getPrimoBinario(configurazioneAttuale);
+		
+		int a2 = (int) Math.pow( (testa.giuntoMaschio.posX-primo.giuntoFemmina.posX),2);
+		int b2 = (int) Math.pow( (testa.giuntoMaschio.posY-primo.giuntoFemmina.posY),2);
+		
+		int rispo=  (int)(Math.sqrt(a2+b2));
+		
+		System.out.println(rispo);
+		return rispo;
+	}
+
+	private static void backTrack(Hashtable configurazioneAttuale, Binario testa) {
+		testa.sgancia();
+		//attaccaNextBinario(configurazioneAttuale); 
+
+	}			
+
+	private static Binario getTestaTracciato(Hashtable configurazioneAttuale) {
+		Binario testa = getPrimoBinario(configurazioneAttuale);
+		while (testa.successivo != null) {
+			testa = testa.successivo;
+		}
+		return testa;
+	}			
+
+
+	public static Binario selezionaBinarioLibero(Hashtable configurazioneAttuale, Binario t) {
+		int max = configurazioneAttuale.size();
+		for (int i=1; i<=max;i++) {
+			Binario binario = (Binario)(configurazioneAttuale.get(""+i));
+			if (t.listaNonBuoni.containsKey(""+binario.getClass()+binario.inclinazioneBase)) continue;
+			if (binario.libero) return binario;	
+		}  
+		return null;
+	}
+
+
+	public static Binario getBinarioLibero(Hashtable configurazioneAttuale, Class tipo) {
+		int max = configurazioneAttuale.size();
+		for (int i=1; i<=max;i++) {
+			Binario binario = (Binario)(configurazioneAttuale.get(""+i));
+			if (binario.getClass() != tipo) continue;
+			if (binario.libero) return binario;	
+		}  
+		return null;
+	}
+
+
+
+	public static Hashtable inizializzaBinari(int numDritti, int numCurvi) {
 		Hashtable configurazione = new Hashtable();
+		_numDritti = numDritti;
+		_numCurvi = numCurvi;
+		int _numBinari = _numDritti+_numCurvi;
 		int d=0;
 		while(d<_numDritti){
 			int rand=1+(int)(Math.random()*_numBinari);
 			if(!configurazione.containsKey(""+rand)){
 				Binario b = new BinarioDritto(rand);
-				
+		
 				configurazione.put("" + rand, b);
-				areaDisegno.insertBinario(b);
 				d++;
 			}
 		}
 		d=0;
 		while(d<_numCurvi){
+			double angolo = 270;
 			int rand=1+(int)(Math.random()*_numBinari);
+
 			if(!configurazione.containsKey(""+rand)){
-				Binario b = new BinarioCurvoSemplice(rand);
-				int rov=1+(int)(Math.random()*2);
+				Binario b = new BinarioCurvoSemplice(rand,angolo);
 				configurazione.put("" + rand, b);
-				if(rov==1) b.rovescia();
-				areaDisegno.insertBinario(b);
 				d++;
 			}
 		}
 		
-		/*
-		for (int i = 1; i <= _numDritti ; i++) {
-			Binario b = new BinarioDritto(i);
-			configurazione.put("" + i, b);
-			areaDisegno.insertBinario(b);
-		}
-		for (int j = 1; j <= _numCurvi ; j++) {
-			Binario b = new BinarioCurvoSemplice(j+_numDritti );
-			configurazione.put("" + (j+_numDritti) , b);
-			areaDisegno.insertBinario(b);
-		}
-		*/
 
+		
+		
 		return configurazione;
 	}
+
+	/**
+	 * @param configurazione
+	 * @return
+	 */
+	public static Binario getPrimoBinario(Hashtable configurazioneAttuale) {
+		if (primoBinario!= null) return primoBinario;
+		
+		reset(configurazioneAttuale);
+		primoBinario = (Binario)configurazioneAttuale.get("1");
+		primoBinario.libero=false;
+		return primoBinario;
+	}
 	
-	public static void cercaSoluzione(){
-		Hashtable stato = inizializzaBinari();
+	/**
+	 * @param configurazione
+	 * @return
+	 */
+	public static Binario getPrimoBinario(Hashtable configurazioneAttuale, Class tipo) {
+		if (primoBinario!= null) return primoBinario;
 		
-		
-		
-		
-		
+		reset(configurazioneAttuale);
+		primoBinario = getBinarioLibero(configurazioneAttuale, tipo);
+		primoBinario.libero=false;
+		return primoBinario;
+	}
+
+
+	private static void reset(Hashtable configurazioneAttuale) {
+		int numBinari  = configurazioneAttuale.size();
+		for(int k = 1;k<=numBinari;k++){
+			int x=k;
+			
+			Binario prossimo = (Binario)(configurazioneAttuale.get(""+x));
+			prossimo.libero=true;
+			prossimo.successivo=null;
+			prossimo.precedente=null;
+			
+		}
+	}
+
+	public static Hashtable getConfigurazione() {
+		if (configurazione == null)
+			
+		configurazione = init();
+		return configurazione;
 	}
 }
