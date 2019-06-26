@@ -7,29 +7,17 @@ import java.awt.Frame;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 
-class Area extends Canvas {
+public class Area extends Canvas {
 	
 	private static Area area =null;
 	
-	
-	Binario[] binario_list = {null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null};
-	int binario_num;
-	
-	
 	public void paint(Graphics g) {
 		g.setColor(Color.red);
-	/*or (int i = 1; i <= 5; i++) {
-			g.drawLine(50, 10 * i, 200, 20 + 10 * i);
-		}
-		g.setColor(Color.blue);
-		g.setFont(new Font("Dialog", Font.PLAIN, 18));
-		g.drawString("LINEE PARALLELE", 50, 100);
-	*/  
-	    
-	    for (int ii=1; ii<=Binario.newid; ii++) {
+		int size=Risolutore.getConfigurazione().size();
+	    for (int ii=1; ii<=size; ii++) {
 	    	//g.setColor(Color.blue);
-		    Binario bin=binario_list[ii];
-	        if (bin != null) bin.disegna(g);
+		    Binario bin=(Binario)(Risolutore.getConfigurazione().get(""+ii));
+	        if (!bin.libero ) bin.disegna(g);
 
 	    }
 	}
@@ -45,10 +33,5 @@ class Area extends Canvas {
 		f.setVisible(true);
 		return area;
 	}
-	  /* inserisce nuovo cerchio alla posizione indicata e ridisegna */
-	  public void insertBinario(Binario bin)
-	  {	//bin.ricalcolaPosizioneGiunti();
-		  binario_list[bin.id]=bin;
-		    
-	  }
+
 }
