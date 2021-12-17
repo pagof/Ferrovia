@@ -6,8 +6,8 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 
 public class BinarioCurvoSemplice extends Binario {
-	double lunghezzaD=31;//pezzo Dritto
-	double lunghezzaC=20;//pezzo Curvo
+	public double lunghezzaSezA=20;//pezzo Dritto
+	public double lunghezzaSezB=20;//pezzo Curvo
 	Giunto f1 = null;
 	Giunto m1 = null;
 	
@@ -18,7 +18,14 @@ public class BinarioCurvoSemplice extends Binario {
 	//   f1 --- --- --- m1
 	//
 	
+	
 
+	@Override
+	public void ricalcolaInclinazioneGiunti(double inclinazione) {
+		this.giuntoMaschio.inclinGiunto = (this.inclinazioneGiunto +inclinazione)%360 ;	
+	}
+	
+	
 	public void disegna(Graphics g) {
 		if(libero )return;
 		Graphics2D g2 = (Graphics2D)g;
@@ -41,47 +48,44 @@ public class BinarioCurvoSemplice extends Binario {
 		//g.drawString("Mx."+giuntoMaschio.posX+" My:"+ giuntoMaschio.posY, 10,id*30+10);
 	}	
 	
+
+
+
+	
+	
 public BinarioCurvoSemplice(int id, double _inclinazioneGiunto ) {
 	super(id);
 	forma ="CURVA-SU";
-	
 	nome = "CURVO"+id;
+	inclinazioneGiunto = _inclinazioneGiunto;
 	
 	f1 = new Giunto();
 	m1 = new Giunto();
-	this.inclinazione =Math.random()*360.0;
-	
-	m1.inclinGiunto=_inclinazioneGiunto;
-	inclinazioneBase = _inclinazioneGiunto;
 
-
-	cX=f1.posX+(Math.cos(fattrad*this.inclinazione)*lunghezzaD);
-	cY=f1.posY+(Math.sin(fattrad*this.inclinazione)*lunghezzaD);
-
-	
-	m1.posX=cX+(Math.cos((fattrad*((this.inclinazione+inclinazioneBase)%angolo_giro)))*lunghezzaC);
-	m1.posY=cY+(Math.sin((fattrad*((this.inclinazione+inclinazioneBase)%angolo_giro)))*lunghezzaC);
-	
 	giuntoMaschio = m1;
 	giuntoFemmina = f1;
+	
+	this.setInclinazione(Math.random()*360.0);
+
 }
 
 
 
 public void ricalcolaPosizioneGiunti(){
 
-	cX=f1.posX+(Math.cos(fattrad*this.inclinazione)*lunghezzaD);
-	cY=f1.posY+(Math.sin(fattrad*this.inclinazione)*lunghezzaD);
+	cX=f1.posX+(Math.cos(getRadianti(this.inclinazione) )*lunghezzaSezA);
+	cY=f1.posY+(Math.sin(getRadianti(this.inclinazione) )*lunghezzaSezA);
 
 {
-		m1.posX=cX+(Math.cos(fattrad*((this.inclinazione+inclinazioneBase)%angolo_giro))*lunghezzaC);
-		m1.posY=cY+(Math.sin(fattrad*((this.inclinazione+inclinazioneBase)%angolo_giro))*lunghezzaC);
+		m1.posX=cX+(Math.cos(getRadianti(giuntoMaschio.inclinGiunto))*lunghezzaSezB);
+		m1.posY=cY+(Math.sin(getRadianti(giuntoMaschio.inclinGiunto))*lunghezzaSezB);
 	}
 
 	
 	
 
 }
+
 }//fine classe
 
 

@@ -27,7 +27,7 @@ public class Risolutore {
 
 	public static Hashtable init() {
 		
-		configurazione = inizializzaBinari(40,8);
+		configurazione = inizializzaBinari(10,20,20,90);
 		areaDisegno = Area.getIstanza();
 		return configurazione;
 	}
@@ -65,16 +65,25 @@ public class Risolutore {
 
 
 	public static boolean fine(Hashtable configurazioneAttuale) {
-		Binario testa = getPrimoBinario(configurazioneAttuale);
+		Binario primo = getPrimoBinario(configurazioneAttuale);
 		Binario ultimo = getTestaTracciato(configurazioneAttuale);
-		if (Math.round(testa.giuntoFemmina.posX) == Math.round(ultimo.giuntoMaschio.posX) &&
-				Math.round(testa.giuntoFemmina.posY) == Math.round(ultimo.giuntoMaschio.posY)) 
-			return true;
+		if (Math.round(primo.giuntoFemmina.posX) == Math.round(ultimo.giuntoMaschio.posX) &&
+				Math.round(primo.giuntoFemmina.posY) == Math.round(ultimo.giuntoMaschio.posY)) {
+			if (Math.round(ultimo.giuntoMaschio.inclinGiunto - primo.inclinazione) == 0){
+				return true;	
+			} else {
+				System.out.println("ang primo:"+primo.inclinazione);
+				System.out.println("ang ultimo:"+ultimo.giuntoMaschio.inclinGiunto);
+			}
+		}
+			
 		return false;
 		
 	}		
 
 	private static boolean soluzioneBuona(Hashtable configurazioneAttuale) {
+		if(numeroLiberi(configurazioneAttuale)>10) return true;
+		
 		if (selezionaBinarioLibero(configurazioneAttuale, primoBinario) == null) {
 			if( fine(configurazioneAttuale)) {
 				//System.exit(0);
@@ -85,7 +94,8 @@ public class Risolutore {
 			else return false;
 		}
 		
-		int lunghezzaMedia = 60;
+		
+		int lunghezzaMedia = 20;
 		if(distanzaTestaPrimo(configurazioneAttuale)>numeroLiberi(configurazioneAttuale)*lunghezzaMedia) {
 			return false;
 		}
@@ -113,7 +123,7 @@ public class Risolutore {
 		
 		int rispo=  (int)(Math.sqrt(a2+b2));
 		
-		System.out.println(rispo);
+		//System.out.println(rispo);
 		return rispo;
 	}
 
@@ -123,11 +133,12 @@ public class Risolutore {
 
 	}			
 
-	private static Binario getTestaTracciato(Hashtable configurazioneAttuale) {
+	public static Binario getTestaTracciato(Hashtable configurazioneAttuale) {
 		Binario testa = getPrimoBinario(configurazioneAttuale);
 		while (testa.successivo != null) {
 			testa = testa.successivo;
 		}
+		//System.out.println("testa="+testa.id);
 		return testa;
 	}			
 
@@ -136,7 +147,7 @@ public class Risolutore {
 		int max = configurazioneAttuale.size();
 		for (int i=1; i<=max;i++) {
 			Binario binario = (Binario)(configurazioneAttuale.get(""+i));
-			if (t.listaNonBuoni.containsKey(""+binario.getClass()+binario.inclinazioneBase)) continue;
+			if (t.listaNonBuoni.containsKey(""+binario.getClass()+binario.inclinazioneGiunto)) continue;
 			if (binario.libero) return binario;	
 		}  
 		return null;
@@ -155,7 +166,7 @@ public class Risolutore {
 
 
 
-	public static Hashtable inizializzaBinari(int numDritti, int numCurvi) {
+	public static Hashtable inizializzaBinari2(int numDritti, int numCurvi, double angolo) {
 		Hashtable configurazione = new Hashtable();
 		_numDritti = numDritti;
 		_numCurvi = numCurvi;
@@ -172,7 +183,7 @@ public class Risolutore {
 		}
 		d=0;
 		while(d<_numCurvi){
-			double angolo = 270;
+			
 			int rand=1+(int)(Math.random()*_numBinari);
 
 			if(!configurazione.containsKey(""+rand)){
@@ -183,6 +194,50 @@ public class Risolutore {
 		}
 		
 
+		
+		
+		return configurazione;
+	}
+	
+	public static Hashtable inizializzaBinari(int numDritti, int numCurviD,int numCurviS, double angolo) {
+		Hashtable configurazione = new Hashtable();
+		_numDritti = numDritti;
+		_numCurvi = numCurviS+numCurviD;
+		int _numBinari = _numDritti+_numCurvi;
+		int d=0;
+		while(d<_numDritti){
+			int rand=1+(int)(Math.random()*_numBinari);
+			if(!configurazione.containsKey(""+rand)){
+				Binario b = new BinarioDritto(rand);
+		
+				configurazione.put("" + rand, b);
+				d++;
+			}
+		}
+		d=0;
+		while(d<numCurviS){
+			
+			int rand=1+(int)(Math.random()*_numBinari);
+
+			if(!configurazione.containsKey(""+rand)){
+				Binario b = new BinarioCurvoSemplice(rand,angolo);
+				configurazione.put("" + rand, b);
+				d++;
+			}
+		}
+		
+		d=0;
+		while(d<numCurviD){
+			
+			int rand=1+(int)(Math.random()*_numBinari);
+
+			if(!configurazione.containsKey(""+rand)){
+				Binario b = new BinarioCurvoSemplice(rand,360-angolo);
+				
+				configurazione.put("" + rand, b);
+				d++;
+			}
+		}
 		
 		
 		return configurazione;
@@ -211,6 +266,8 @@ public class Risolutore {
 		reset(configurazioneAttuale);
 		primoBinario = getBinarioLibero(configurazioneAttuale, tipo);
 		primoBinario.libero=false;
+		
+		//System.out.println("primo="+primoBinario.id);
 		return primoBinario;
 	}
 
